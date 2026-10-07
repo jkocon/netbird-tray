@@ -428,7 +428,8 @@ class NetBirdTray:
         expires = (self.status or {}).get("sessionExpiresAt") or ""
         if expires and self.connected:
             sub.append(self.item(f"Session expires {until_text(expires)}"))
-        sub.append(self.item("Log in again…", self.login, bool(self.status) and not self.busy))
+        sub.append(self.item("Log in again (extend session)…", self.extend_session if self.connected else self.login,
+                             bool(self.status) and not self.busy))
         sub.append(self.item("Add another profile…", self.add_profile, bool(self.status) and not self.busy))
         admin = self.admin_url()
         sub.append(self.item("Admin console", lambda: webbrowser.open(admin), bool(admin)))
@@ -644,12 +645,17 @@ class NetBirdTray:
         run("netbird", "profile", "select", name)
         self.login("--management-url", url, "--admin-url", url)
 
-    def login(self, *extra: str) -> None:
+    def extend_session(self) -> None:
+        # `up` przy aktywnym połączeniu kończy się "Already connected" bez logowania; `login --extend`
+        # przedłuża sesję SSO bez zrywania tunelu (nowy termin wg ustawienia w panelu).
+        self.login(cmd=("netbird", "login", "--extend", "--no-browser"))
+
+    def login(self, *extra: str, cmd: tuple[str, ...] = ("netbird", "up", "--no-browser")) -> None:
         if self.login_proc and self.login_proc.poll() is None:
             return
         # --no-browser: CLI sam też próbuje otworzyć przeglądarkę - otwieramy ją raz, sami.
         self.login_proc = subprocess.Popen(
-            ["netbird", "up", "--no-browser", *extra],
+            [*cmd, *extra],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True,
         )
         threading.Thread(target=self._watch_login, args=(self.login_proc,), daemon=True).start()
@@ -671,6 +677,13 @@ class NetBirdTray:
             self.busy = ""
             if proc.returncode != 0:
                 error("Login failed:\n" + NOISE.sub("", "".join(out[-15:])).strip())
+            else:
+                try:
+                    status = json.loads(run("netbird", "status", "--json").stdout)
+                except ValueError:
+                    status = {}
+                expires = until_text(status.get("sessionExpiresAt") or "")
+                notify("NetBird: logged in", f"Session expires {expires}." if expires else "")
             self.force_refresh()
 
         idle_once(finish)
