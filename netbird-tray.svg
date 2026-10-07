@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+ <!-- Ikona aplikacji NetBird Tray: sygnet NetBird (z github.com/netbirdio/netbird) w stylu tailscale-tray/twingate-tray.
+      Poświata z półprzezroczystych obrysów, bo renderer SVG w Qt/KDE nie obsługuje filtrów. -->
+ <defs>
+  <radialGradient id="bgGlow" cx="0.5" cy="0.55" r="0.7">
+   <stop offset="0" stop-color="#3a1747"/>
+   <stop offset="0.55" stop-color="#150d24"/>
+   <stop offset="1" stop-color="#07070d"/>
+  </radialGradient>
+  <linearGradient id="nbOrange" x1="0" y1="0" x2="1" y2="1">
+   <stop offset="0" stop-color="#ffb070"/>
+   <stop offset="1" stop-color="#f68330"/>
+  </linearGradient>
+  <linearGradient id="nbRed" x1="0" y1="0" x2="1" y2="1">
+   <stop offset="0" stop-color="#ff7a7a"/>
+   <stop offset="1" stop-color="#e03c3c"/>
+  </linearGradient>
+ </defs>
+ <rect x="2" y="2" width="124" height="124" rx="24" fill="url(#bgGlow)"/>
+ <g transform="translate(22.2 33) scale(2.7)" stroke-linejoin="round">
+  <path d="M21.4631 0.523438C17.8173 0.857913 16.0028 2.95675 15.3171 4.01871L4.66406 22.4734H17.5163L30.1929 0.523438H21.4631Z" fill="none" stroke="#b86bff" stroke-opacity="0.18" stroke-width="5.2"/>
+  <path d="M17.5265 22.4737L0 3.88525C0 3.88525 19.8177 -1.44128 21.7493 15.1738L17.5265 22.4737Z" fill="none" stroke="#b86bff" stroke-opacity="0.18" stroke-width="5.2"/>
+  <path d="M14.9236 4.70563L9.54688 14.0208L17.5158 22.4747L21.7385 15.158C21.0696 9.44682 18.2851 6.32784 14.9236 4.69727Z" fill="none" stroke="#b86bff" stroke-opacity="0.18" stroke-width="5.2"/>
+  <path d="M21.4631 0.523438C17.8173 0.857913 16.0028 2.95675 15.3171 4.01871L4.66406 22.4734H17.5163L30.1929 0.523438H21.4631Z" fill="none" stroke="#9fb4ff" stroke-opacity="0.35" stroke-width="2.6"/>
+  <path d="M17.5265 22.4737L0 3.88525C0 3.88525 19.8177 -1.44128 21.7493 15.1738L17.5265 22.4737Z" fill="none" stroke="#9fb4ff" stroke-opacity="0.35" stroke-width="2.6"/>
+  <path d="M14.9236 4.70563L9.54688 14.0208L17.5158 22.4747L21.7385 15.158C21.0696 9.44682 18.2851 6.32784 14.9236 4.69727Z" fill="none" stroke="#9fb4ff" stroke-opacity="0.35" stroke-width="2.6"/>
+  <path d="M21.4631 0.523438C17.8173 0.857913 16.0028 2.95675 15.3171 4.01871L4.66406 22.4734H17.5163L30.1929 0.523438H21.4631Z" fill="url(#nbOrange)" stroke="#ffe3c9" stroke-width="0.37"/>
+  <path d="M17.5265 22.4737L0 3.88525C0 3.88525 19.8177 -1.44128 21.7493 15.1738L17.5265 22.4737Z" fill="url(#nbOrange)" stroke="#ffe3c9" stroke-width="0.37"/>
+  <path d="M14.9236 4.70563L9.54688 14.0208L17.5158 22.4747L21.7385 15.158C21.0696 9.44682 18.2851 6.32784 14.9236 4.69727Z" fill="url(#nbRed)" stroke="#ffd6d6" stroke-width="0.37"/>
+ </g>
+</svg>

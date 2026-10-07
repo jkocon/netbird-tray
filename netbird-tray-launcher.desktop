@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=NetBird Tray
+GenericName=NetBird
+Comment=NetBird status and settings in the system tray
+Exec=/usr/bin/python3 /usr/local/lib/netbird-tray/netbird_tray.py
+Icon=netbird-tray
+Terminal=false
+Categories=Network;
+Keywords=netbird;vpn;wireguard;mesh;network;
