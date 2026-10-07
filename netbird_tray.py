@@ -23,6 +23,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import threading
 import webbrowser
 from datetime import datetime, timezone
@@ -89,14 +90,33 @@ def service_unit() -> str:
 
 
 def daemon_addr(unit: str) -> str:
-    env = os.environ.get("NB_DAEMON_ADDR")
-    if env:
-        return env
+    # Instancja szablonu ma własny socket - NB_DAEMON_ADDR z sesji wskazuje tylko jedną z nich.
     m = re.fullmatch(r"netbird@(.+)\.service", unit)
     if m:
         return f"unix:///var/run/netbird/{m.group(1)}.sock"
+    env = os.environ.get("NB_DAEMON_ADDR")
+    if env:
+        return env
     socks = glob.glob("/var/run/netbird.sock") + sorted(glob.glob("/var/run/netbird/*.sock"))
     return f"unix://{socks[0]}" if socks else "unix:///var/run/netbird.sock"
+
+
+def all_units() -> list[str]:
+    """Wszystkie włączone albo działające instancje (np. prywatna netbird@wt0 i firmowa netbird@wt1)."""
+    res = run("systemctl", "list-units", "--all", "--plain", "--no-legend", "netbird.service", "netbird@*.service")
+    units = {line.split()[0] for line in res.stdout.splitlines()
+             if line.strip() and line.split()[2] == "active"}
+    res = run("systemctl", "list-unit-files", "--plain", "--no-legend", "netbird.service", "netbird@*.service")
+    for line in res.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == "enabled" and not parts[0].endswith("@.service"):
+            units.add(parts[0])
+    return sorted(units)
+
+
+def instance_name(unit: str) -> str:
+    m = re.fullmatch(r"netbird@(.+)\.service", unit)
+    return m.group(1) if m else "default"
 
 
 # ---------- pomocnicze ----------
@@ -213,8 +233,8 @@ def parse_profiles(text: str) -> tuple[list[str], str]:
 
 
 class NetBirdTray:
-    def __init__(self) -> None:
-        self.unit = service_unit()
+    def __init__(self, unit: str = "") -> None:
+        self.unit = unit or service_unit()
         os.environ["NB_DAEMON_ADDR"] = daemon_addr(self.unit)
         self.status: dict | None = None
         self.networks: list[dict] = []
@@ -228,9 +248,9 @@ class NetBirdTray:
         self.polling = False
         self.login_proc: subprocess.Popen | None = None
 
-        self.indicator = AppIndicator3.Indicator.new("netbird-tray", ICON_OFF,
+        self.indicator = AppIndicator3.Indicator.new(f"netbird-tray-{instance_name(self.unit)}", ICON_OFF,
                                                      AppIndicator3.IndicatorCategory.SYSTEM_SERVICES)
-        self.indicator.set_title("NetBird")
+        self.indicator.set_title(f"NetBird ({instance_name(self.unit)})")
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
         self.indicator.set_menu(self.build_menu())
         self.refresh()
@@ -357,6 +377,11 @@ class NetBirdTray:
         m = Gtk.Menu()
         add = m.append
         state = self.state
+
+        # --- nagłówek: która sieć (przy kilku instancjach ikony wyglądają tak samo) ---
+        host = urlparse(self.admin_url()).hostname or instance_name(self.unit)
+        add(self.item(f"NetBird – {host}"))
+        add(Gtk.SeparatorMenuItem())
 
         # --- status ---
         if self.busy:
@@ -703,10 +728,10 @@ class NetBirdTray:
         subprocess.Popen(["kdialog", "--title", f"About {APP_NAME}", "--icon", "netbird-tray", "--msgbox", text])
 
 
-def single_instance_lock():
+def single_instance_lock(unit: str):
     runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/tmp/netbird-tray-{os.getuid()}"
     os.makedirs(runtime, exist_ok=True)
-    lock = open(os.path.join(runtime, "netbird-tray.lock"), "w")
+    lock = open(os.path.join(runtime, f"netbird-tray-{instance_name(unit)}.lock"), "w")
     try:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
@@ -716,12 +741,22 @@ def single_instance_lock():
 
 
 def main() -> None:
-    lock = single_instance_lock()
+    # Bez argumentu: po jednej ikonie na każdą instancję demona (osobne procesy - każdy z własnym
+    # AppIndicatorem i blokadą); z argumentem netbird@<iface>.service: tylko ta instancja.
+    if len(sys.argv) > 1:
+        unit = sys.argv[1]
+    else:
+        units = all_units() or [service_unit()]
+        for extra in units[1:]:
+            subprocess.Popen([sys.executable, os.path.abspath(__file__), extra], start_new_session=True)
+        unit = units[0]
+    lock = single_instance_lock(unit)
     if lock is None:
-        notify("NetBird Tray is already running", "The icon is in the system tray.")
+        if len(sys.argv) <= 1:
+            notify("NetBird Tray is already running", "The icon is in the system tray.")
         return
     GLib.set_prgname("netbird-tray")
-    NetBirdTray()
+    NetBirdTray(unit)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     Gtk.main()
 

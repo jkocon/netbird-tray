@@ -27,5 +27,17 @@ jednostkę i socket sam, a `install.sh` zapisuje `NB_DAEMON_ADDR` w `/etc/enviro
 dla CLI w terminalu. Reguła polkit `49-netbird-tray.rules` pozwala grupie `wheel` na start/stop/restart
 usługi bez hasła; włączanie autostartu nadal pyta o hasło.
 
+Kilka instancji (np. prywatna `netbird@wt0` i firmowa `netbird@wt1`): tray bez argumentu uruchamia
+po jednej ikonie na każdą włączoną/działającą instancję; nagłówek menu pokazuje serwer zarządzający
+(np. „NetBird – vpn.example.com”). Druga instancja potrzebuje własnego stanu i nie może sprzątać
+tras pierwszej – drop-in `/etc/systemd/system/netbird@wt1.service.d/10-instance.conf`:
+`StateDirectory=netbird-wt1`, `NB_STATE_DIR`, `NB_DNS_STATE_FILE`, `NB_NFTABLES_TABLE=netbird-wt1`,
+`NB_FWMARK_BASE=0x1BE00`, `NB_DISABLE_SSH_CONFIG=true` i `NB_USE_LEGACY_ROUTING=true` (obie instancje
+dzieliłyby tablicę routingu 7120 i `down` jednej kasował trasy drugiej). Do tego dla wszystkich instancji
+`/etc/systemd/system/netbird@.service.d/10-shared-runtime.conf` z `RuntimeDirectoryPreserve=yes` –
+inaczej restart jednej instancji kasuje `/run/netbird` razem z gniazdem drugiej.
+Pierwsze połączenie drugiej instancji: `NB_DAEMON_ADDR=unix:///var/run/netbird/wt1.sock netbird up
+--management-url https://… --interface-name wt1 --wireguard-port 51821`.
+
 Instalacja: `sudo -A ./install.sh` (do `/usr/local/lib/netbird-tray`, autostart w `/etc/xdg/autostart`).
 Na X13 robi to automatycznie `target/apply.sh` (kod 10 = brak `netbird`, pomija).
