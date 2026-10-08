@@ -9,6 +9,7 @@
 //! ma prawa 0666, więc nie trzeba roota. Systemctl (autostart, restart usługi) idzie przez pkexec;
 //! install.sh dodaje regułę polkit, żeby start/stop/restart nie pytały o hasło.
 
+mod common;
 mod parse;
 
 use std::sync::OnceLock;
@@ -17,10 +18,10 @@ use std::time::Duration;
 use ksni::blocking::Handle;
 use regex::Regex;
 use serde_json::Value;
-use tray_common::cmd::stream_lines;
-use tray_common::json::{arr, b, get, n, s};
-use tray_common::menu::{button, check, radio, sep, submenu, text, Menu};
-use tray_common::{bg, icon_path, open_url, refresh_now, run, unit_active, unit_enabled, App, Out, Poller, POLLER};
+use crate::common::cmd::stream_lines;
+use crate::common::json::{arr, b, get, n, s};
+use crate::common::menu::{button, check, radio, sep, submenu, text, Menu};
+use crate::common::{bg, icon_path, open_url, refresh_now, run, unit_active, unit_enabled, App, Out, Poller, POLLER};
 
 use parse::{
     admin_url, clean, daemon_addr, host_of, instance_name, parse_networks, parse_profiles, short_name, strip_prefix,
@@ -694,7 +695,7 @@ fn main() {
     std::env::set_var("NB_DAEMON_ADDR", daemon_addr(&unit));
 
     let lock_name = format!("netbird-tray-{}.lock", instance_name(&unit));
-    let _lock = match tray_common::single_instance_lock(APP.id, &lock_name) {
+    let _lock = match crate::common::single_instance_lock(APP.id, &lock_name) {
         _ if dump => None,
         Ok(Some(file)) => Some(file),
         Ok(None) => {
@@ -729,10 +730,10 @@ fn main() {
     };
     if dump {
         apply(&mut tray, gather(&unit));
-        println!("icon: {}\n{}", ksni::Tray::tool_tip(&tray).title, tray_common::menu::dump(&ksni::Tray::menu(&tray)));
+        println!("icon: {}\n{}", ksni::Tray::tool_tip(&tray).title, crate::common::menu::dump(&ksni::Tray::menu(&tray)));
         return;
     }
-    match tray_common::spawn_tray(tray) {
+    match crate::common::spawn_tray(tray) {
         Ok(handle) => {
             let _ = HANDLE.set(handle);
         }
@@ -745,5 +746,5 @@ fn main() {
         let g = gather(&unit);
         update(move |t| apply(t, g));
     }));
-    tray_common::park_forever();
+    crate::common::park_forever();
 }

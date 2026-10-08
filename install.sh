@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Instaluje/aktualizuje netbird-tray w systemie. Uruchom jako root (sudo -A ./install.sh).
-# Na X13 robi to automatycznie target/apply.sh po każdej zmianie w netbird-tray/ albo tray-common/.
+# Na X13 robi to automatycznie target/apply.sh z cachyos_sync po każdym nowym commicie w tym repo.
 # Działający tray podmienia się dopiero po ponownym zalogowaniu (albo: pkill -x netbird-tray; /usr/local/lib/netbird-tray/netbird-tray &).
 # Kod wyjścia 10 = brak NetBird, nic nie zainstalowano.
 set -euo pipefail
@@ -16,7 +16,7 @@ fi
 pacman -S --needed --asdeps --noconfirm kdialog wl-clipboard libnotify xdg-utils
 
 # Binarka w Rust (od 2.0; wcześniej netbird_tray.py z GTK/AppIndicator), budowana jako zwykły użytkownik.
-BIN=$("$SRC/../tray-common/build.sh" "$SRC")
+BIN=$("$SRC/build.sh" "$SRC")
 
 install -Dm755 "$BIN" "$LIB/netbird-tray"
 rm -rf "$LIB/netbird_tray.py" "$LIB/__pycache__"  # wersja w Pythonie

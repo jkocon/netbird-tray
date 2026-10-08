@@ -40,9 +40,11 @@ Pierwsze połączenie drugiej instancji: `NB_DAEMON_ADDR=unix:///var/run/netbird
 --management-url https://… --interface-name wt1 --wireguard-port 51821`.
 
 Kod: Rust (`src/`, od wersji 2.0 zamiast `netbird_tray.py` z GTK/AppIndicator). Ikona i menu przez `ksni`
-(StatusNotifierItem + DBusMenu, bez GTK; lewy klik otwiera menu), wspólne części w `../tray-common/`.
-`install.sh` buduje binarkę jako zwykły użytkownik (`tray-common/build.sh`, cargo z pakietu `rust`).
+(StatusNotifierItem + DBusMenu, bez GTK; lewy klik otwiera menu). `src/common/` to część wspólna z
+[tailscale-tray](https://github.com/jkocon/tailscale-tray), [twingate-tray](https://github.com/jkocon/twingate-tray)
+i [netbird-tray](https://github.com/jkocon/netbird-tray) - ta sama kopia w każdym repo.
+`install.sh` buduje binarkę jako zwykły użytkownik (`build.sh`, cargo z pakietu `rust`).
 Podgląd bez ikony: `cargo run -- --dump` wypisuje menu dla bieżącego stanu demona; testy: `cargo test`.
 
 Instalacja: `sudo -A ./install.sh` (do `/usr/local/lib/netbird-tray`, autostart w `/etc/xdg/autostart`).
-Na X13 robi to automatycznie `target/apply.sh` (kod 10 = brak `netbird`, pomija).
+Na komputerach synchronizowanych przez cachyos_sync robi to automatycznie `target/apply.sh` po każdym nowym commicie (kod 10 = brak `netbird`, pomija).

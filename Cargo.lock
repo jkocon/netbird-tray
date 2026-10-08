@@ -512,9 +512,9 @@ version = "2.0.0"
 dependencies = [
  "chrono",
  "ksni",
+ "libc",
  "regex",
  "serde_json",
- "tray-common",
 ]
 
 [[package]]
@@ -845,15 +845,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
-]
-
-[[package]]
-name = "tray-common"
-version = "2.0.0"
-dependencies = [
- "ksni",
- "libc",
- "serde_json",
 ]
 
 [[package]]
