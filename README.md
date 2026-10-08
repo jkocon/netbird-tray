@@ -39,5 +39,10 @@ inaczej restart jednej instancji kasuje `/run/netbird` razem z gniazdem drugiej.
 Pierwsze połączenie drugiej instancji: `NB_DAEMON_ADDR=unix:///var/run/netbird/wt1.sock netbird up
 --management-url https://… --interface-name wt1 --wireguard-port 51821`.
 
+Kod: Rust (`src/`, od wersji 2.0 zamiast `netbird_tray.py` z GTK/AppIndicator). Ikona i menu przez `ksni`
+(StatusNotifierItem + DBusMenu, bez GTK; lewy klik otwiera menu), wspólne części w `../tray-common/`.
+`install.sh` buduje binarkę jako zwykły użytkownik (`tray-common/build.sh`, cargo z pakietu `rust`).
+Podgląd bez ikony: `cargo run -- --dump` wypisuje menu dla bieżącego stanu demona; testy: `cargo test`.
+
 Instalacja: `sudo -A ./install.sh` (do `/usr/local/lib/netbird-tray`, autostart w `/etc/xdg/autostart`).
 Na X13 robi to automatycznie `target/apply.sh` (kod 10 = brak `netbird`, pomija).

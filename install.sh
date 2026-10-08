@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Instaluje/aktualizuje netbird-tray w systemie. Uruchom jako root (sudo -A ./install.sh).
-# Na X13 robi to automatycznie target/apply.sh po każdej zmianie w katalogu netbird-tray/.
+# Na X13 robi to automatycznie target/apply.sh po każdej zmianie w netbird-tray/ albo tray-common/.
+# Działający tray podmienia się dopiero po ponownym zalogowaniu (albo: pkill -x netbird-tray; /usr/local/lib/netbird-tray/netbird-tray &).
 # Kod wyjścia 10 = brak NetBird, nic nie zainstalowano.
 set -euo pipefail
 SRC="$(cd "$(dirname "$0")" && pwd)"
@@ -12,9 +13,13 @@ if ! command -v netbird >/dev/null; then
     exit 10
 fi
 
-pacman -S --needed --asdeps --noconfirm python-gobject libayatana-appindicator kdialog wl-clipboard
+pacman -S --needed --asdeps --noconfirm kdialog wl-clipboard libnotify xdg-utils
 
-install -Dm644 -t "$LIB" "$SRC/netbird_tray.py"
+# Binarka w Rust (od 2.0; wcześniej netbird_tray.py z GTK/AppIndicator), budowana jako zwykły użytkownik.
+BIN=$("$SRC/../tray-common/build.sh" "$SRC")
+
+install -Dm755 "$BIN" "$LIB/netbird-tray"
+rm -rf "$LIB/netbird_tray.py" "$LIB/__pycache__"  # wersja w Pythonie
 rm -rf "$LIB/icons"  # bez ikon o starych nazwach
 install -Dm644 -t "$LIB/icons" "$SRC"/icons/*.svg
 install -Dm644 -t /etc/xdg/autostart "$SRC/netbird-tray.desktop"
