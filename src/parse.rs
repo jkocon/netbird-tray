@@ -15,6 +15,13 @@ pub struct Net {
     pub selected: bool,
 }
 
+impl Net {
+    /// Exit node = trasa domyślna. NetBird 0.80 podaje oba prefiksy w jednym polu: "0.0.0.0/0, ::/0".
+    pub fn is_exit(&self) -> bool {
+        self.network.split(',').any(|p| EXIT_PREFIXES.contains(&p.trim()))
+    }
+}
+
 /// CLI netbird loguje ostrzeżenia gRPC na stderr przy każdym wywołaniu - do komunikatów tylko reszta.
 pub fn clean(text: &str) -> String {
     let noise = Regex::new(r"(?m)^\S+ (INFO|WARN|DEBG) .*$|^.*caller_not_available.*$").unwrap();
@@ -141,6 +148,16 @@ mod tests {
         assert_eq!(nets[0], Net { id: "home-lan".into(), network: "10.20.0.0/16".into(), domains: "".into(), selected: true });
         assert!(!nets[1].selected);
         assert_eq!(nets[2].domains, "*.example.com");
+        assert!(!nets[0].is_exit());
+        assert!(nets[1].is_exit());
+    }
+
+    #[test]
+    fn exit_dual_stack() {
+        let nets = parse_networks("Available Networks:\n\n  - ID: Exit Node Dom\n    Network: 0.0.0.0/0, ::/0\n    Status: Selected\n");
+        assert_eq!(nets[0].network, "0.0.0.0/0, ::/0");
+        assert!(nets[0].is_exit());
+        assert!(Net { id: "v6".into(), network: "::/0".into(), domains: "".into(), selected: false }.is_exit());
     }
 
     #[test]

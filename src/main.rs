@@ -25,7 +25,7 @@ use crate::common::{bg, icon_path, open_url, refresh_now, run, unit_active, unit
 
 use parse::{
     admin_url, clean, daemon_addr, host_of, instance_name, parse_networks, parse_profiles, short_name, strip_prefix,
-    until_text, Net, EXIT_PREFIXES,
+    until_text, Net,
 };
 
 const APP: App = App { name: "NetBird Tray", id: "netbird-tray" };
@@ -150,7 +150,7 @@ impl Tray {
     }
 
     fn exit_node(&self) -> Option<&Net> {
-        self.networks.iter().find(|n| EXIT_PREFIXES.contains(&n.network.as_str()) && n.selected)
+        self.networks.iter().find(|n| n.is_exit() && n.selected)
     }
 
     fn peers(&self) -> &[Value] {
@@ -274,7 +274,7 @@ impl Tray {
     }
 
     fn networks_menu(&self) -> ksni::MenuItem<Self> {
-        let mut nets: Vec<&Net> = self.networks.iter().filter(|n| !EXIT_PREFIXES.contains(&n.network.as_str())).collect();
+        let mut nets: Vec<&Net> = self.networks.iter().filter(|n| !n.is_exit()).collect();
         nets.sort_by_key(|n| n.id.to_lowercase());
         let on = nets.iter().filter(|n| n.selected).count();
         let idle = self.busy.is_empty();
@@ -300,7 +300,7 @@ impl Tray {
     }
 
     fn exit_nodes_menu(&self) -> ksni::MenuItem<Self> {
-        let mut exits: Vec<&Net> = self.networks.iter().filter(|n| EXIT_PREFIXES.contains(&n.network.as_str())).collect();
+        let mut exits: Vec<&Net> = self.networks.iter().filter(|n| n.is_exit()).collect();
         exits.sort_by_key(|n| n.id.to_lowercase());
         let current = self.exit_node().map(|n| n.id.clone());
         let idle = self.busy.is_empty();
